@@ -8,13 +8,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -39,11 +34,20 @@ public class PFD extends JPanel implements MouseMotionListener {
 	 * 
 	 */
 
-	int speedY = 250, altY = 250;// y coordinate of speed and altitude meter
-	int attX = -70, attY = -630, slider2Val;
-	int rad = 0;// Bank angle in degrees
+	private int speedY = 250, altY = 250;// y coordinate of speed and altitude meter
+	private int attY = -630;//y coordinate of attitude indicator
+	private int rad=0;// Bank angle in degrees
+	private int maxHeight=100000;//max altitude
+	private int maxSpeed=1000;//max speed
+	private int minBankAngle=-90;//min bank angle
+	private int maxBankAngle=90;//max bank angle
+	private int minPitchAngle=-90;//min pitch angle
+	private int maxPitchAngle=90;//max pitch angle
 
-	Graphics2D g2;
+	private Graphics2D g2;
+	private AltitudeIndicator altIndi = new AltitudeIndicator(850, 50, 120, 375);
+	private SpeedIndicator speedIndi = new SpeedIndicator(30, 50, 120, 375);
+	private BankMeter jPanel2 = new BankMeter(-210, -214, 420, 420);
 
 	public PFD() {
 		initComponents();
@@ -55,100 +59,12 @@ public class PFD extends JPanel implements MouseMotionListener {
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		Shape s = new Rectangle2D.Double(30, 50, 120, 375);// speed gauge
-		Shape s2 = new Rectangle2D.Double(850, 50, 120, 375);// altitude gauge
+		
 		g2 = (Graphics2D) g;
+		speedIndi.DrawMeter(g2, maxSpeed,speedY,jSlider1.getValue());
+		altIndi.DrawMeter(g2, maxHeight,altY,jSlider3.getValue());
+		jPanel2.DrawCurrentAngle(g2,jSlider4.getValue());		
 
-		g2.setColor(Color.lightGray);
-		g2.fill(s);
-		g2.setColor(Color.lightGray);
-		g2.fill(s2);
-
-		g2.setColor(Color.white);
-		g2.draw(s);
-		g2.setColor(Color.white);
-		g2.draw(s2);
-
-		g2.setColor(Color.white);
-		Font fn = new Font("Serif", Font.PLAIN, 15);
-
-		g2.setFont(fn);
-
-		for (int x = 0; x <= 1000; x++) {
-
-			if (x % 10 == 0 && x < 990) {
-				if (speedY > 85 && speedY < 460)
-					g2.draw(new Line2D.Double(30, speedY - 35, 50, speedY - 35));
-
-			}
-
-			if (x % 20 == 0) {
-
-				if (speedY > 60 && speedY < 430) {
-					g2.draw(new Line2D.Double(30, speedY - 5, 50, speedY - 5));
-
-				}
-				if (speedY > 60 && speedY < 425) {
-
-					g2.drawString(x + "", 70, speedY);
-
-				}
-
-				speedY -= 60;
-			}
-
-		}
-
-		for (int x = 0; x <= 100000; x++) {
-
-			if (x % 100 == 0 && x < 99900) {
-				if (altY > 85 && altY < 460)
-					g2.draw(new Line2D.Double(950, altY - 35, 970, altY - 35));
-
-			}
-
-			if (x % 200 == 0) {
-
-				if (altY > 60 && altY < 430) {
-					g2.draw(new Line2D.Double(950, altY - 5, 970, altY - 5));
-
-				}
-				if (altY > 60 && altY < 425) {
-
-					g2.drawString(x + "", 900, altY);
-
-				}
-
-				altY -= 60;
-			}
-
-		}
-		g2.setColor(Color.black);
-		g2.fillRect(60, 230, 60, 30);
-		g2.draw(new Line2D.Double(50, 245, 60, 230));
-		g2.draw(new Line2D.Double(50, 245, 60, 259));
-
-		g2.fillRect(850, 230, 90, 30);
-		g2.draw(new Line2D.Double(950, 245, 940, 230));
-		g2.draw(new Line2D.Double(950, 245, 940, 259));
-		g2.setColor(Color.white);
-		fn = new Font("Serif", Font.BOLD, 25);
-
-		g2.setFont(fn);
-		g2.drawString(jSlider1.getValue() + "", 65, 253);
-		g2.drawString(jSlider3.getValue() + "", 855, 253);
-		speedY = jSlider1.getValue() * 3 + 250;
-		altY = jSlider3.getValue() * 3 / 10 + 250;
-
-		g2.setColor(Color.gray);
-		g2.fillRect(471, 450, 25, 40);
-		g2.draw(new Line2D.Double(471, 490, 483, 499));
-		g2.draw(new Line2D.Double(496, 490, 483, 499));
-		g2.setColor(Color.white);
-		fn = new Font("Serif", Font.BOLD, 17);
-
-		g2.setFont(fn);
-		g2.drawString(jSlider4.getValue() + "", 471, 470);
 
 	}
 
@@ -167,7 +83,7 @@ public class PFD extends JPanel implements MouseMotionListener {
 		jSlider4 = new JSlider();
 		jLabel5 = new JLabel();
 		jPanel1 = new JPanel();
-		jPanel2 = new BankMeter();
+
 		jLabel7 = new JLabel();
 		jLabel6 = new RotateLabel();
 
@@ -183,7 +99,7 @@ public class PFD extends JPanel implements MouseMotionListener {
 		setPreferredSize(new Dimension(1000, 700));
 
 		jSlider1.setMajorTickSpacing(20);
-		jSlider1.setMaximum(1000);
+		jSlider1.setMaximum(maxSpeed);
 		jSlider1.setMinorTickSpacing(10);
 		jSlider1.setValue(0);
 		jSlider1.addChangeListener(new ChangeListener() {
@@ -198,8 +114,8 @@ public class PFD extends JPanel implements MouseMotionListener {
 		jLabel2.setFont(new Font("Tahoma", 0, 18)); // NOI18N
 		jLabel2.setText("D/U");
 
-		jSlider2.setMaximum(288);
-		jSlider2.setMinimum(-293);
+		jSlider2.setMaximum(maxPitchAngle+198);
+		jSlider2.setMinimum(minPitchAngle-203);
 		jSlider2.setValue(0);
 		jSlider2.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent evt) {
@@ -215,7 +131,7 @@ public class PFD extends JPanel implements MouseMotionListener {
 		jLabel4.setText("L/R");
 
 		jSlider3.setMajorTickSpacing(200);
-		jSlider3.setMaximum(100000);
+		jSlider3.setMaximum(maxHeight);
 		jSlider3.setMinorTickSpacing(100);
 		jSlider3.setValue(0);
 		jSlider3.addChangeListener(new ChangeListener() {
@@ -225,8 +141,8 @@ public class PFD extends JPanel implements MouseMotionListener {
 		});
 
 		// jSlider4.setMajorTickSpacing(200);
-		jSlider4.setMaximum(90);
-		jSlider4.setMinimum(-90);
+		jSlider4.setMaximum(maxBankAngle);
+		jSlider4.setMinimum(minBankAngle);
 		// jSlider4.setMinorTickSpacing(100);
 		jSlider4.setValue(0);
 		jSlider4.addChangeListener(new ChangeListener() {
@@ -240,13 +156,13 @@ public class PFD extends JPanel implements MouseMotionListener {
 		jPanel1.setPreferredSize(new Dimension(350, 350));
 		jPanel1.setLayout(null);
 
-		jLabel7.setIcon(new ImageIcon("wing8.png")); // NOI18N
+		jLabel7.setIcon(new ImageIcon("src/wing8.png")); // NOI18N
 		jLabel7.setLabelFor(jLabel7);
 		jLabel7.setNextFocusableComponent(jLabel6);
 		jPanel1.add(jLabel7);
 		jLabel7.setBounds(80, 130, 200, 62);
 
-		jLabel6.setIcon(new ImageIcon("pfd4.jpg")); // NOI18N
+		jLabel6.setIcon(new ImageIcon("src/pfd4.jpg")); // NOI18N
 		jLabel6.setPreferredSize(new Dimension(1600, 1600));
 		jPanel1.add(jLabel6);
 		jLabel6.setBounds(-620, -630, 1600, 1600);
@@ -468,8 +384,10 @@ public class PFD extends JPanel implements MouseMotionListener {
 	private void jSlider4StateChanged(ChangeEvent evt) {
 
 		rad = -jSlider4.getValue();
+		jPanel2.setRad(rad);
 		jPanel1.repaint();
 		jPanel2.repaint();
+		
 		repaint();
 	}
 
@@ -477,25 +395,25 @@ public class PFD extends JPanel implements MouseMotionListener {
 	private void jSlider2StateChanged(ChangeEvent evt) {
 
 		jLabel6.setBounds(jLabel6.getBounds().x,
-				attY + jSlider2.getValue() * 2, 1600, 1600);
+				attY + jSlider2.getValue()*2, 1600, 1600);
 
 	}
 
 	// Variables declarations
-	private javax.swing.JFrame jFrame1;
-	private javax.swing.JLabel jLabel1;
-	private javax.swing.JLabel jLabel2;
-	private javax.swing.JLabel jLabel3;
-	private javax.swing.JLabel jLabel4;
-	private javax.swing.JLabel jLabel5;
-	private javax.swing.JLabel jLabel6;
-	private javax.swing.JLabel jLabel7;
-	private javax.swing.JPanel jPanel1;
-	private javax.swing.JPanel jPanel2;
-	private javax.swing.JSlider jSlider1;
-	private javax.swing.JSlider jSlider2;
-	private javax.swing.JSlider jSlider3;
-	private javax.swing.JSlider jSlider4;
+	private JFrame jFrame1;
+	private JLabel jLabel1;
+	private JLabel jLabel2;
+	private JLabel jLabel3;
+	private JLabel jLabel4;
+	private JLabel jLabel5;
+	private JLabel jLabel6;
+	private JLabel jLabel7;
+	private JPanel jPanel1;
+	
+	private JSlider jSlider1;
+	private JSlider jSlider2;
+	private JSlider jSlider3;
+	private JSlider jSlider4;
 
 	// End of variables declaration
 
@@ -526,49 +444,8 @@ public class PFD extends JPanel implements MouseMotionListener {
 		}
 	}
 
-	// inner class for creating/measuring the bank angle. updates the bank angle
-	// appropriately
-	private class BankMeter extends JPanel {
+	
 
-		BankMeter() {
-
-			setPreferredSize(new Dimension(420, 210));
-
-		}
-
-		@Override
-		public void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			Graphics2D gx = (Graphics2D) g;
-			Font fn;
-			gx.setColor(Color.gray);
-
-			gx.translate(getWidth() / 2, getHeight());
-			gx.rotate(Math.toRadians(rad * 1.8), 0, 0);
-			Shape s3 = new Ellipse2D.Double(-210, -214, 420, 420);
-
-			gx.fill(s3);
-
-			fn = new Font("Serif", Font.BOLD, 20);
-
-			gx.setFont(fn);
-			gx.setColor(Color.white);
-			int y = -90;
-			for (int x = 0; x < 20; x++) {
-
-				gx.fill3DRect(0, -215, 3, 16, true);
-				gx.fill3DRect(35, -210, 3, 8, true);
-				if (x < 10)
-					gx.drawString(" " + 10 * x, -10, -185);
-				else if (x > 10) {
-					gx.drawString(y + "  ", -14, -185);
-					y += 10;
-				}
-
-				gx.rotate(2 * Math.PI / 20);
-
-			}
-
-		}
-	}
+	
+	
 }
